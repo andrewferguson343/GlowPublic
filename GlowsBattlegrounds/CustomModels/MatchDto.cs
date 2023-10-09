@@ -11,7 +11,7 @@ public class Match
     public string serverNumber { get; set; }
     public string mapName { get; set; }
 
-    public List<PlayerDto> players { get; set; }
+    public List<PlayerDto> playerStats { get; set; }
 
 
 }

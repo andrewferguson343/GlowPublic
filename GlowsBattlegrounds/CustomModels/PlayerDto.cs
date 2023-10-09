@@ -14,11 +14,11 @@ public class PlayerDto
     public int teamkills { get; set; }
     public int teamkillsStreak { get; set; }
     public int deathsByTk { get; set; }
-    public int deathsByTkSstreak { get; set; }
+    public int deathsByTkStreak { get; set; }
     public int timeSeconds { get; set; }
-    public int killsPerMinute { get; set; }
-    public int deathsPerMinute { get; set; }
-    public int killDeathRatio { get; set; }
+    public double killsPerMinute { get; set; }
+    public double deathsPerMinute { get; set; }
+    public double killDeathRatio { get; set; }
     public int longestLifeSeconds { get; set; }
     public int combat { get; set; }
     public int offense { get; set; }

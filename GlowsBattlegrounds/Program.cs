@@ -1,8 +1,15 @@
+using GlowsBattlegrounds.Services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<IHistoricalDataService, HistoricalDataService>();
+
+builder.Services.AddDbContext<StatsContext>(options =>
+    options.UseSqlServer("Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=Glow;Data Source=DESKTOP-V90O7SH;Encrypt=False;"));
 
 var app = builder.Build();
 
