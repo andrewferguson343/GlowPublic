@@ -9,7 +9,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IHistoricalDataService, HistoricalDataService>();
 
 builder.Services.AddDbContext<StatsContext>(options =>
-    options.UseSqlServer("Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=Glow;Data Source=DESKTOP-V90O7SH;Encrypt=False;"));
+    options.UseSqlServer("Server=tcp:raps.database.windows.net,1433;Initial Catalog=Glows;Persist Security Info=False;User ID=AndrewFerguson343;Password=7Bananas!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"));
 
 var app = builder.Build();
 

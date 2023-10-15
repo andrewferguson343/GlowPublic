@@ -14,14 +14,14 @@ public class PlayerStats
     public double averageKd { get; set; }
     public double averageKpm { get; set; }
     public double averageDpm { get; set; }
-    public double mostKills { get; set; }
-    public double totalKills { get; set; }
-    public double totalDeaths { get; set; }
-    public double mostDeaths { get; set; }
-    public double highestKillStreak { get; set; }
-    public double highestDeathStreak { get; set; }
-    public double timesBetrayed { get; set; }
+    public int mostKills { get; set; }
+    public int totalKills { get; set; }
+    public int totalDeaths { get; set; }
+    public int mostDeaths { get; set; }
+    public int highestKillStreak { get; set; }
+    public int highestDeathStreak { get; set; }
+    public int timesBetrayed { get; set; }
     public string firstSeen { get; set; }
     public string lastSeen { get; set; }
-    public double totalTeamkills { get; set; }
+    public int totalTeamkills { get; set; }
 }
