@@ -27,15 +27,28 @@ public class AdminController : ControllerBase
         _historicalDataService = historicalDataService;
     }
 
-    [HttpGet("canary")]
+    [HttpGet("Canary")]
     public async Task CheckAuthenticated()
     {
         HttpClient httpClient = new HttpClient();
 
-        HttpResponseMessage response = await httpClient.GetAsync("http://glows.gg:8013/api/get_map_scoreboard?map_id=30000");
+        HttpResponseMessage response = await httpClient.GetAsync("http://glows.gg:8013/api/get_map_scoreboard?map_id=1");
 
         String responseString = await response.Content.ReadAsStringAsync();
         responseString = responseString.Replace("_", "");
-        var testTask =await _historicalDataService.SyncFromLastProcessedGame();
+        var testTask = await _historicalDataService.SyncFromLastProcessedGame();
     }
+    //
+    // [HttpGet("json")]
+    // public async Task WriteToJsonFile()
+    // {
+    //     var testTask =await _historicalDataService.CreateJsonFile();
+    // }
+    //
+    // [HttpGet("readjson")]
+    // public async Task ReadToJsonFile()
+    // {
+    //     var testTask =await _historicalDataService.ReadJsonFile();
+    // }
+    
 }

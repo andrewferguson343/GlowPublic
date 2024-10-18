@@ -20,10 +20,10 @@ public class PlayerDto
     public double deathsPerMinute { get; set; }
     public double killDeathRatio { get; set; }
     public int longestLifeSeconds { get; set; }
-    public int combat { get; set; }
-    public int offense { get; set; }
-    public int defense { get; set; }
-    public int support { get; set; }
+    public int? combat { get; set; }
+    public int? offense { get; set; }
+    public int? defense { get; set; }
+    public int? support { get; set; }
     public Dictionary<string, string> weapons { get; set; }
     public Dictionary<string, string> deathByWeapons { get; set; }
     

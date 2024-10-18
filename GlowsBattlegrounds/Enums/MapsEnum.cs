@@ -60,5 +60,44 @@ public enum MapsEnum
     utahbeach_offensive_ger,
     utahbeach_offensive_us,
     utahbeach_warfare,
-    utahbeach_warfare_night
+    utahbeach_warfare_night,
+    mortain_offensiveUS_day,
+    mortain_offensiveUS_overcast,
+    mortain_offensiveger_day,
+    mortain_offensiveger_overcast,
+    mortain_skirmish_day,
+    mortain_skirmish_overcast,
+    mortain_warfare_day,
+    mortain_warfare_overcast,
 }
+
+//
+//
+// mortain_warfare_overcast
+// omahabeach_offensive_ger
+// omahabeach_offensive_us
+// omahabeach_warfare
+// purpleheartlane_offensive_ger
+// purpleheartlane_offensive_us
+// purpleheartlane_warfare
+// purpleheartlane_warfare_night
+// remagen_offensive_ger
+// remagen_offensive_us
+// remagen_warfare
+// remagen_warfare_night
+// stalingrad_offensive_ger
+// stalingrad_offensive_rus
+// stalingrad_warfare
+// stmariedumont_off_ger
+// stmariedumont_off_us 
+//     stmariedumont_warfare
+// stmariedumont_warfare_night
+// stmereeglise_offensive_ger
+// stmereeglise_offensive_us
+// stmereeglise_warfare
+// stmereeglise_warfare_night
+// utahbeach_offensive_ger
+// utahbeach_offensive_us
+// utahbeach_warfare
+// utahbeach_warfare_night
+// omahabeach_warfare_night

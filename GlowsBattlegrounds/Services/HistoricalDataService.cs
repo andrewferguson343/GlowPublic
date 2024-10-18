@@ -11,7 +11,7 @@ public class HistoricalDataService : IHistoricalDataService
 {
     private readonly ILogger<HistoricalDataService> _logger;
     private readonly StatsContext _statsContext;
-    private int lastProcessedGame = 30940;
+    private int lastProcessedGame = 100;
     
     private Dictionary<string, string> globalWeaponStats = new Dictionary<string, string>();
     private Dictionary<string, string> globalMapStats = new Dictionary<string, string>();
@@ -29,43 +29,70 @@ public class HistoricalDataService : IHistoricalDataService
         HttpClient httpClient = new HttpClient();
 
         _logger.LogInformation("Retrieving Historical Stats starting from match ID " + lastProcessedGame);
-        while (lastProcessedGame < 30996)
+        while (lastProcessedGame == 100)
         {
-            var watch = System.Diagnostics.Stopwatch.StartNew();
-
             _logger.LogInformation("Starting to parse for match " + lastProcessedGame);
 
             HttpResponseMessage response =
                 await httpClient.GetAsync("http://glows.gg:8013/api/get_map_scoreboard?map_id=" + lastProcessedGame);
 
-            String responseString = await response.Content.ReadAsStringAsync();
-            responseString = responseString.Replace("_", "");
-
-            try
+            if (response.IsSuccessStatusCode)
             {
-                ResultDto historicalMapStats = JsonConvert.DeserializeObject<ResultDto>(responseString);
+                String responseString = await response.Content.ReadAsStringAsync();
+                responseString = responseString.Replace("_", "");
+                
+                try
+                {
+                    ResultDto historicalMapStats = JsonConvert.DeserializeObject<ResultDto>(responseString);
+                    if (historicalMapStats.result != null)
+                    {
+                        await ProcessStatsForMatch(historicalMapStats);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError("Error deserializing stats... Aborting");
+                    _logger.LogError(e.StackTrace);
+                    return false;
+                }
 
-                PlayerStats playerStats = await ProcessPlayerStats(historicalMapStats);
-                watch.Stop();
-
-                _logger.LogInformation("processed stats for " + historicalMapStats.result.playerStats.Count +
-                                       " players in " + watch.ElapsedMilliseconds + "ms");
-
+                lastProcessedGame++;
             }
-            catch (Exception e)
-            {
-                _logger.LogError("Error deserializing stats... Aborting");
-                _logger.LogError(e.StackTrace);
-                return false;
-            }
-
-            lastProcessedGame++;
         }
+        _statsContext.SaveChanges();
+
 
         return true;
     }
 
-    private async Task<PlayerStats> ProcessPlayerStats(ResultDto mapStats)
+    public async Task<Boolean> CreateJsonFile()
+    {
+        List < PlayerStats > playerStatsList = _statsContext.PlayerStats.ToList();
+        
+        using (StreamWriter file = File.CreateText(@"D:\data\path.txt"))
+        {
+            JsonSerializer serializer = new JsonSerializer();
+            //serialize object directly into file stream
+            serializer.Serialize(file, playerStatsList);
+        }
+
+        return true;
+    }
+    
+    public async Task<Boolean> ReadJsonFile()
+    {
+        
+        using (StreamReader r = new StreamReader("./Services/path.txt"))
+        {
+            string json = r.ReadToEnd();
+            List<PlayerStats> items = JsonConvert.DeserializeObject<List<PlayerStats>>(json);
+        }
+    
+        return true;
+    }
+    
+
+    private async Task<PlayerStats> ProcessStatsForMatch(ResultDto mapStats)
     {
         GlobalStats globalStats = _statsContext.GlobalStats
             .OrderByDescending(p => p.id)
@@ -93,46 +120,66 @@ public class HistoricalDataService : IHistoricalDataService
                     mapStats.result.start);
             }
 
-            UpdateGlobalStats(globalStats, processedStats );
-
+            UpdateGlobalStats(globalStats, processedStats);
         }
-
-        _statsContext.SaveChanges();
-
         return null;
     }
 
     private PlayerStats ProcessNewPlayerRecord(PlayerDto playerDto, String mapName, String matchStart)
     {
-        _logger.LogInformation("Adding new player record for " + playerDto.steamId64);
-        if (playerDto.steamInfo != null)
-        {
-            _logger.LogInformation("Mapped " + playerDto.steamInfo.profile.personaName + " to " + playerDto.steamId64);
-        }
-
         PlayerStats playerStats = new PlayerStats();
+        try
+        {
+            _logger.LogInformation("Adding new player record for " + playerDto.steamId64);
+            if (playerDto.steamInfo != null)
+            {
+                _logger.LogInformation("Mapped " + playerDto.steamInfo.profile.personaName + " to " +
+                                       playerDto.steamId64);
+            }
 
-        Dictionary<String, String> mapStats = new Dictionary<string, string>();
-        mapStats.Add(mapName, "1");
-        playerStats.steamId = playerDto.steamId64;
-        playerStats.gamertag = playerDto.steamInfo != null ? playerDto.steamInfo.profile.personaName : "UNMAPPED";
-        playerStats.averageDpm = playerDto.deathsPerMinute;
-        playerStats.averageKpm = playerDto.killsPerMinute;
-        playerStats.averageKd = playerDto.killDeathRatio;
-        playerStats.lastSeen = matchStart;
-        playerStats.firstSeen = matchStart;
-        playerStats.mostDeaths = playerDto.deaths;
-        playerStats.totalDeaths = playerDto.deaths;
-        playerStats.totalKills = playerDto.kills;
-        playerStats.mostKills = playerDto.kills;
-        playerStats.weaponKillsBlob = JsonConvert.SerializeObject(playerDto.weapons);
-        playerStats.weaponDeathsBlob = JsonConvert.SerializeObject(playerDto.deathByWeapons);
-        playerStats.mapBlob = JsonConvert.SerializeObject(mapStats);
-        playerStats.timesBetrayed = playerDto.deathsByTk;
-        playerStats.totalGames = 1;
-        playerStats.highestKillStreak = playerDto.killsStreak;
-        _statsContext.Add(playerStats);
-        return playerStats;
+            if (playerDto.steamId64.Equals("76561198042426888"))
+            {
+                Console.WriteLine("you");
+            }
+
+            
+
+            Dictionary<String, String> mapStats = new Dictionary<string, string>();
+            mapStats.Add(mapName, "1");
+            playerStats.steamId = playerDto.steamId64;
+            try
+            {
+                playerStats.gamertag =
+                    playerDto.steamInfo != null ? playerDto.steamInfo.profile.personaName : "UNMAPPED";
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("no gamertag in steam info");
+            }
+
+            playerStats.averageDpm = playerDto.deathsPerMinute;
+            playerStats.averageKpm = playerDto.killsPerMinute;
+            playerStats.averageKd = playerDto.killDeathRatio;
+            playerStats.lastSeen = matchStart;
+            playerStats.firstSeen = matchStart;
+            playerStats.mostDeaths = playerDto.deaths;
+            playerStats.totalDeaths = playerDto.deaths;
+            playerStats.totalKills = playerDto.kills;
+            playerStats.mostKills = playerDto.kills;
+            playerStats.weaponKillsBlob = JsonConvert.SerializeObject(playerDto.weapons);
+            playerStats.weaponDeathsBlob = JsonConvert.SerializeObject(playerDto.deathByWeapons);
+            playerStats.mapBlob = JsonConvert.SerializeObject(mapStats);
+            playerStats.timesBetrayed = playerDto.deathsByTk;
+            playerStats.totalGames = 1;
+            playerStats.highestKillStreak = playerDto.killsStreak;
+            _statsContext.Add(playerStats);
+        }
+        catch(Exception e)
+        {
+            _logger.LogError("Error processing new player record for " + playerDto.steamId64);
+            _logger.LogError(e.StackTrace);
+        }
+        return null;
     }
 
     private PlayerStats AddStatsToExistingPlayerRecord(PlayerStats existingStats, PlayerDto statsToAdd, String mapName,
@@ -147,9 +194,6 @@ public class HistoricalDataService : IHistoricalDataService
         {
             _logger.LogInformation("Updating player record for " + statsToAdd.steamId64);
         }
-
-        Dictionary<String, String> mapStats = new Dictionary<string, string>();
-        mapStats.Add(mapName, "1");
         existingStats.totalGames += 1;
 
         existingStats.lastSeen = matchStart;
@@ -200,15 +244,6 @@ public class HistoricalDataService : IHistoricalDataService
             maps.Add(mapName, "1");
         }
         
-        if (globalMapStats.ContainsKey(mapName))
-        {
-            globalMapStats[mapName] = (Convert.ToInt32(globalMapStats[mapName]) + 1).ToString();
-        }
-        else
-        {
-            maps.Add(mapName, "1");
-        }
-
         existingStats.mapBlob = JsonConvert.SerializeObject(maps);
         _statsContext.Update(existingStats);
 
@@ -218,19 +253,27 @@ public class HistoricalDataService : IHistoricalDataService
     private string UpdateWeaponStats(Dictionary<string, string> weaponsToAdd,
         string existingWeaponJsonBlob)
     {
+        if (existingWeaponJsonBlob.Equals("null"))
+        {
+            existingWeaponJsonBlob = "{}";
+        }
         Dictionary<string, string> currentWeaponStats =
             JsonConvert.DeserializeObject<Dictionary<string, string>>(existingWeaponJsonBlob);
 
-        foreach (KeyValuePair<string, string> weapon in weaponsToAdd)
+
+        if (weaponsToAdd != null)
         {
-            if (currentWeaponStats.ContainsKey(weapon.Key))
+            foreach (KeyValuePair<string, string> weapon in weaponsToAdd)
             {
-                currentWeaponStats[weapon.Key] =
-                    (Convert.ToInt32(currentWeaponStats[weapon.Key]) + Convert.ToInt32(weapon.Value)).ToString();
-            }
-            else
-            {
-                currentWeaponStats.Add(weapon.Key, weapon.Value);
+                if (currentWeaponStats.ContainsKey(weapon.Key))
+                {
+                    currentWeaponStats[weapon.Key] =
+                        (Convert.ToInt32(currentWeaponStats[weapon.Key]) + Convert.ToInt32(weapon.Value)).ToString();
+                }
+                else
+                {
+                    currentWeaponStats.Add(weapon.Key, weapon.Value);
+                }
             }
         }
 
@@ -239,21 +282,27 @@ public class HistoricalDataService : IHistoricalDataService
 
     private void UpdateGlobalStats(GlobalStats globalStats, PlayerStats playerStats)
     {
-        globalStats.totalDeaths += playerStats.totalDeaths;
-        globalStats.totalKills += playerStats.totalDeaths;
+        if (playerStats != null)
+        {
+            globalStats.totalDeaths += playerStats.totalDeaths;
+            globalStats.totalKills += playerStats.totalKills;
 
-        if (playerStats.highestKillStreak > globalStats.highestKillstreak)
-        {
-            globalStats.highestKillstreak = playerStats.highestKillStreak;
-        } 
-        if (playerStats.mostKills > globalStats.highestKills)
-        {
-            globalStats.highestKillstreak = playerStats.highestKillStreak;
-        } if (playerStats.highestKillStreak > globalStats.highestKillstreak)
-        {
-            globalStats.highestKillstreak = playerStats.highestKillStreak;
+            if (playerStats.highestKillStreak > globalStats.highestKillstreak)
+            {
+                globalStats.highestKillstreak = playerStats.highestKillStreak;
+            }
+
+            if (playerStats.mostKills > globalStats.highestKills)
+            {
+                globalStats.highestKillstreak = playerStats.highestKillStreak;
+            }
+
+            if (playerStats.highestKillStreak > globalStats.highestKillstreak)
+            {
+                globalStats.highestKillstreak = playerStats.highestKillStreak;
+            }
+
+            globalStats.highestKills += playerStats.totalDeaths;
         }
-        globalStats.highestKills +=playerStats.totalDeaths;
-        globalStats.totalDeaths += Convert.ToInt32(playerStats.totalDeaths);
     }
 }

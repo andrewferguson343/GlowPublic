@@ -7,10 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IHistoricalDataService, HistoricalDataService>();
+builder.Services.AddScoped<IStatsService, StatsService>();
 
 builder.Services.AddDbContext<StatsContext>(options =>
-    options.UseSqlServer("Server=tcp:raps.database.windows.net,1433;Initial Catalog=Glows;Persist Security Info=False;User ID=AndrewFerguson343;Password=7Bananas!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"));
-
+    options.UseSqlServer(
+        ""));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -23,6 +24,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors();
 
 
 app.MapControllerRoute(
